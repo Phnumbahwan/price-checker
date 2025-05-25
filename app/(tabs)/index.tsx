@@ -41,32 +41,23 @@ export default function HomeScreen() {
     setFacing(current => (current === 'back' ? 'front' : 'back'));
   }
 
-  // function saveItem() {
-  //   if (!itemName || !itemPrice) return;
-  //   db.runAsync('INSERT INTO items (barcode, name, price) VALUES (?, ?, ?)', [
-  //     scannedBarcode,
-  //     itemName,
-  //     parseFloat(itemPrice),
-  //   ]);
-
-  //   setIsAdding(false);
-  // }
-
   async function saveItem() {
     try {
       if (!itemName || !itemPrice) return;
       console.log(scannedBarcode)
-      const existingItem = await db.runAsync(
+      const existingItem = await db.getFirstAsync(
         'SELECT * FROM items WHERE barcode = ?',
         [scannedBarcode]
       );
       console.log(existingItem)
       if (existingItem) {
+        console.log('exist')
         await db.runAsync(
           'UPDATE items SET name = ?, price = ? WHERE barcode = ?',
           [itemName, parseFloat(itemPrice), scannedBarcode]
         );
       } else {
+        console.log('not')
         await db.runAsync(
           'INSERT INTO items (barcode, name, price) VALUES (?, ?, ?)',
           [scannedBarcode, itemName, parseFloat(itemPrice)]
@@ -81,22 +72,26 @@ export default function HomeScreen() {
 
 
   const handleBarcodeScanned = (barcode: BarcodeScanningResult) => {
-    setScannedBarcode(barcode.data);
-    const result = db.getFirstSync('SELECT * FROM items WHERE barcode = ?', [barcode.data]);
-
-    if (result) {
-      // setItemNameDisplay(result.name);
-      // setItemPriceDisplay(result.price.toString());
-      setItemName(result.name);
-      setItemPrice(result.price.toString());
-      setIsAdding(false);
-      console.log('Display now!');
-    } else {
-      setItemName('');
-      setItemPrice('');
-      setIsAdding(true);
+    try {
+      setScannedBarcode(barcode.data);
+      const result = db.getFirstSync('SELECT * FROM items WHERE barcode = ?', [barcode.data]);
+      console.log(barcode.data)
+      console.log(result)
+      if (result) {
+        // setItemNameDisplay(result.name);
+        // setItemPriceDisplay(result.price.toString());
+        setItemName(result.name);
+        setItemPrice(result.price.toString());
+        setIsAdding(false);
+        console.log('Display now!');
+      } else {
+        setItemName('');
+        setItemPrice('');
+        setIsAdding(true);
+      }
+    } catch (error) {
+      console.log(error)
     }
-
   };
 
   return (
@@ -116,31 +111,6 @@ export default function HomeScreen() {
         </View>
       </CameraView>
 
-      {/* {!isAdding && (
-        <View style={styles.detailsContainer}>
-          <Text style={styles.text}>Name: {itemNameDisplay}</Text>
-          <Text style={styles.text}>Price: ${itemPriceDisplay}</Text>
-        </View>
-      )}
-
-      {isAdding && (
-        <View style={styles.addItemContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter Item Name"
-            value={itemName}
-            onChangeText={setItemName}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Enter Item Price"
-            value={itemPrice}
-            onChangeText={setItemPrice}
-            keyboardType="numeric"
-          />
-          <Button title="Save Item" onPress={saveItem} />
-        </View>
-      )} */}
       <View style={styles.addItemContainer}>
         <TextInput
           style={styles.input}
